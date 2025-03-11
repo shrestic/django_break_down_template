@@ -1,32 +1,22 @@
 import redis
-import json
-
+import time
 
 def get_redis_client():
-    return redis.Redis(host="localhost", port=6379, db=0, decode_responses=True)
+    # Không truyền parser_class, để redis-py tự động chọn dựa trên môi trường cài đặt
+    return redis.Redis(host='localhost', port=6379, db=0, decode_responses=True)
 
-
-def cache_data(key, value, timeout=60):
-    r = get_redis_client()
-    r.setex(key, timeout, json.dumps(value))
-
-
-def get_cached_data(key):
-    r = get_redis_client()
-    data = r.get(key)
-    return json.loads(data) if data else None
-
-
-def batch_set_data(data_dict):
-    r = get_redis_client()
-    with r.pipeline() as pipe:
-        for key, value in data_dict.items():
-            pipe.set(key, json.dumps(value))
-        pipe.execute()
-
-
+# Test hiệu suất
 if __name__ == "__main__":
-    data = {"key1": "value1", "key2": "value2"}
-    batch_set_data(data)
     r = get_redis_client()
-    print(r.get("key1"), r.get("key2"))
+    
+    # Set dữ liệu lớn
+    r.set('test_key', 'x' * 10000)
+    
+    # Đo thời gian không có hiredis (giả lập bằng cách chạy trước khi cài hiredis)
+    print("Run this first without hiredis: pip install redis==5.2.1")
+    start = time.time()
+    for _ in range(1000):
+        r.get('test_key')
+    print(f"No hiredis: {time.time() - start:.4f}s")
+    
+    print("Then run again with hiredis: pip install redis[hiredis]")
