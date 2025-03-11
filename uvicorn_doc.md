@@ -1,3 +1,4 @@
+
 ---
 
 # 📘 `uvicorn_doc`
@@ -49,7 +50,7 @@
 python manage.py runserver  # Kiểm tra project đã hoạt động
 
 # Chạy bằng Uvicorn
-uvicorn myproject.asgi:application --host 0.0.0.0 --port 8000
+uvicorn mainkode_example.asgi:application --host 0.0.0.0 --port 8000
 ```
 
 **Test endpoint:**
@@ -63,7 +64,7 @@ curl http://127.0.0.1:8000/api/hello/
 **Mô tả**: Chạy Uvicorn với chế độ auto-reload để tiện debug.
 
 ```bash
-uvicorn myproject.asgi:application --host 0.0.0.0 --port 8000 --reload
+uvicorn mainkode_example.asgi:application --host 0.0.0.0 --port 8000 --reload
 ```
 
 **Test thay đổi trực tiếp:**
@@ -80,3 +81,64 @@ return Response({"message": "Hi from DRF with Uvicorn!"})
   `{"message": "Hi from DRF with Uvicorn!"}`
 
 ---
+
+### 📡 Commit 3: Tích hợp WebSocket
+**Mô tả**: Cấu hình DRF để hỗ trợ WebSocket thông qua Uvicorn.
+
+#### 1️⃣ `myapp/consumers.py`
+```python
+import json
+from channels.generic.websocket import AsyncWebsocketConsumer
+
+class ChatConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+        await self.accept()
+
+    async def receive(self, text_data):
+        await self.send(text_data=json.dumps({"message": f"Echo: {text_data}"}))
+```
+
+#### 2️⃣ `myapp/routing.py`
+```python
+from django.urls import re_path
+from . import consumers
+
+websocket_urlpatterns = [
+    re_path(r'ws/chat/$', consumers.ChatConsumer.as_asgi()),
+]
+```
+
+#### 3️⃣ `mainkode_example/asgi.py` (cập nhật)
+```python
+import os
+from django.core.asgi import get_asgi_application
+from channels.routing import ProtocolTypeRouter, URLRouter
+from myapp.routing import websocket_urlpatterns
+
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'mainkode_example.settings')
+
+application = ProtocolTypeRouter({
+    "http": get_asgi_application(),
+    "websocket": URLRouter(websocket_urlpatterns),
+})
+```
+
+#### 4️⃣ Cài đặt thêm:
+```bash
+pip install channels
+```
+
+#### 5️⃣ Chạy server:
+```bash
+uvicorn mainkode_example.asgi:application --host 0.0.0.0 --port 8000
+```
+
+#### 6️⃣ Test bằng WebSocket client (ví dụ: `wscat`)
+```bash
+wscat -c ws://127.0.0.1:8000/ws/chat/
+# Gõ: Hello
+# Kết quả: {"message": "Echo: Hello"}
+```
+
+**Kết quả**:
+- WebSocket hoạt động hoàn chỉnh nhờ `Uvicorn` và `websockets` từ gói `[standard]`.
