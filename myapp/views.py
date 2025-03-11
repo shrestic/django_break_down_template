@@ -13,3 +13,8 @@ class ProductListView(generics.ListCreateAPIView):
 class OrderListView(generics.ListCreateAPIView):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
+
+
+class PendingOrderListView(generics.ListAPIView):
+    queryset = Order.pending_orders.all()
+    serializer_class = OrderSerializer
