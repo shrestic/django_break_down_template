@@ -1,6 +1,6 @@
 from django.urls import path
-from .views import BigListView
+from .views import CacheTestView
 
 urlpatterns = [
-    path("big-list/", BigListView.as_view(), name="big-list"),
+    path('cache-test/', CacheTestView.as_view(), name='cache-test'),
 ]
