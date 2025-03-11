@@ -1,17 +1,14 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from .models import Product
-from .serializers import ProductSerializer
-from .utils import cache_data, get_cached_data
+import redis
 
-class ProductListView(APIView):
+class BigListView(APIView):
     def get(self, request):
-        cache_key = 'product_list'
-        cached = get_cached_data(cache_key)
-        if cached:
-            return Response(cached)
+        # redis-py sẽ tự dùng hiredis nếu đã cài
+        r = redis.Redis(host='localhost', port=6379, db=0, decode_responses=True)
+        # Giả lập dữ liệu lớn
+        if not r.exists('big_list'):
+            r.lpush('big_list', *map(str, range(10000)))
         
-        products = Product.objects.all()
-        serializer = ProductSerializer(products, many=True)
-        cache_data(cache_key, serializer.data)
-        return Response(serializer.data)
+        data = r.lrange('big_list', 0, -1)
+        return Response({'count': len(data), 'sample': data[:5]})
