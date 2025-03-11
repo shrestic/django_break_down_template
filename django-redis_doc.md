@@ -41,3 +41,36 @@ CACHES = {
         }
     }
 }
+```
+
+### Commit 3:
+Trong lệnh:
+```bash
+curl -c cookies.txt -b cookies.txt http://127.0.0.1:8000/api/session-test/
+```
+
+### `cookies.txt` là file dùng để **lưu trữ cookie phiên làm việc** giữa các lần gửi request bằng `curl`.
+
+Cụ thể:
+
+| Tùy chọn `curl` | Ý nghĩa |
+|-----------------|--------|
+| `-c cookies.txt` | **"Save cookie vào file `cookies.txt"`** – tức là nếu server trả về cookie (như session ID), thì curl sẽ ghi lại vào file `cookies.txt`. |
+| `-b cookies.txt` | **"Gửi cookie từ file `cookies.txt`"** – tức là curl sẽ đọc cookie từ file đó và gửi lại cho server (ví dụ: session cookie để duy trì đăng nhập). |
+
+---
+
+### Ví dụ thực tế:
+Lần đầu gửi request:
+```bash
+curl -c cookies.txt http://127.0.0.1:8000/login/
+```
+→ Server trả về session cookie, curl sẽ lưu lại vào `cookies.txt`.
+
+Lần sau:
+```bash
+curl -b cookies.txt http://127.0.0.1:8000/api/session-test/
+```
+→ curl sẽ gửi lại cookie đó để server biết bạn là **user đã login**, không bị coi là "khách lạ".
+
+---

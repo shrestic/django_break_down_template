@@ -23,3 +23,9 @@ class ProductListView(APIView):
         serializer = ProductSerializer(products, many=True)
         cache.set(cache_key, serializer.data, timeout=300)  # Cache 5 phút
         return Response(serializer.data)
+
+
+class SessionTestView(APIView):
+    def get(self, request):
+        request.session["visit_count"] = request.session.get("visit_count", 0) + 1
+        return Response({"visit_count": request.session["visit_count"]})
