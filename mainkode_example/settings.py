@@ -25,7 +25,7 @@ SECRET_KEY = "django-insecure-i4nnu3+#h5&edafoampi_*4g#63-(6b#x!*0^ru=v_tny+1@@&
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
 
 
 # Application definition
@@ -38,7 +38,11 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "rest_framework",
-    "myapp",
+    "accounts.apps.AccountsConfig",  # App của bạn
+    "allauth",
+    "allauth.account",
+    "allauth.socialaccount",  # Dùng cho social login
+    "allauth.mfa",  # Dùng cho MFA
 ]
 
 MIDDLEWARE = [
@@ -49,6 +53,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "allauth.account.middleware.AccountMiddleware",
 ]
 
 ROOT_URLCONF = "mainkode_example.urls"
@@ -123,3 +128,15 @@ STATIC_URL = "static/"
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+AUTHENTICATION_BACKENDS = [
+    "django.contrib.auth.backends.ModelBackend",
+    "allauth.account.auth_backends.AuthenticationBackend",
+]
+
+# Cấu hình cơ bản cho allauth
+SITE_ID = 1  # Yêu cầu bởi django.contrib.sites
+ACCOUNT_EMAIL_VERIFICATION = "mandatory"  # Bắt buộc xác minh email
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_LOGIN_METHODS = {"username", "email"}  # Linh hoạt username hoặc email
+
