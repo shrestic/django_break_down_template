@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
+from datetime import timedelta
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -37,12 +38,10 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "rest_framework",
-    "accounts.apps.AccountsConfig",  # App của bạn
-    "allauth",
-    "allauth.account",
-    "allauth.socialaccount",  # Dùng cho social login
-    "allauth.mfa",  # Dùng cho MFA
+    "rest_framework",  # REST API
+    "accounts",  # App custom
+    "rest_framework.authtoken",
+    "rest_framework_simplejwt.token_blacklist",
 ]
 
 MIDDLEWARE = [
@@ -53,8 +52,12 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "allauth.account.middleware.AccountMiddleware",
 ]
+
+AUTHENTICATION_BACKENDS = [
+    "django.contrib.auth.backends.ModelBackend",
+]
+
 
 ROOT_URLCONF = "mainkode_example.urls"
 
@@ -74,6 +77,20 @@ TEMPLATES = [
     },
 ]
 
+
+# Cấu hình allauth
+AUTH_USER_MODEL = "accounts.CustomUser"
+
+
+# REST Framework
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.SessionAuthentication",
+        "rest_framework.authentication.TokenAuthentication",
+    ],
+}
+
+
 WSGI_APPLICATION = "mainkode_example.wsgi.application"
 
 
@@ -86,6 +103,9 @@ DATABASES = {
         "NAME": BASE_DIR / "db.sqlite3",
     }
 }
+
+# Cấu hình email (dùng console để test)
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 
 # Password validation
@@ -129,14 +149,16 @@ STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-AUTHENTICATION_BACKENDS = [
-    "django.contrib.auth.backends.ModelBackend",
-    "allauth.account.auth_backends.AuthenticationBackend",
-]
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ]
+}
 
-# Cấu hình cơ bản cho allauth
-SITE_ID = 1  # Yêu cầu bởi django.contrib.sites
-ACCOUNT_EMAIL_VERIFICATION = "mandatory"  # Bắt buộc xác minh email
-ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_LOGIN_METHODS = {"username", "email"}  # Linh hoạt username hoặc email
-
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    "ROTATE_REFRESH_TOKENS": True,
+    "AUTH_HEADER_TYPES": ("Bearer",),
+    "BLACKLIST_AFTER_ROTATION": True,
+}
