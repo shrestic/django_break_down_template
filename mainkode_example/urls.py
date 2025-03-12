@@ -20,5 +20,8 @@ from django.urls import path, include
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("api/accounts/", include("accounts.urls")),
+    path("auth/", include("djoser.urls")),
+    path("auth/", include("djoser.urls.jwt")),
+    path("auth/", include("djoser.social.urls")),
+    path("auth/", include("social_django.urls", namespace="social")),  # Đảm bảo tiền tố /auth/
 ]

@@ -26,7 +26,7 @@ SECRET_KEY = "django-insecure-i4nnu3+#h5&edafoampi_*4g#63-(6b#x!*0^ru=v_tny+1@@&
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
+ALLOWED_HOSTS = []
 
 
 # Application definition
@@ -38,10 +38,12 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "rest_framework",  # REST API
-    "accounts",  # App custom
-    "rest_framework.authtoken",
+    "core",
+    "rest_framework",
+    "rest_framework_simplejwt",
     "rest_framework_simplejwt.token_blacklist",
+    "djoser",
+    "social_django",
 ]
 
 MIDDLEWARE = [
@@ -52,12 +54,8 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "social_django.middleware.SocialAuthExceptionMiddleware",
 ]
-
-AUTHENTICATION_BACKENDS = [
-    "django.contrib.auth.backends.ModelBackend",
-]
-
 
 ROOT_URLCONF = "mainkode_example.urls"
 
@@ -72,24 +70,12 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "social_django.context_processors.backends",
+                "social_django.context_processors.login_redirect",
             ],
         },
     },
 ]
-
-
-# Cấu hình allauth
-AUTH_USER_MODEL = "accounts.CustomUser"
-
-
-# REST Framework
-REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework.authentication.SessionAuthentication",
-        "rest_framework.authentication.TokenAuthentication",
-    ],
-}
-
 
 WSGI_APPLICATION = "mainkode_example.wsgi.application"
 
@@ -103,9 +89,6 @@ DATABASES = {
         "NAME": BASE_DIR / "db.sqlite3",
     }
 }
-
-# Cấu hình email (dùng console để test)
-EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 
 # Password validation
@@ -149,16 +132,72 @@ STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+
+# REST Framework
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework_simplejwt.authentication.JWTAuthentication",
-    ]
+    ],
 }
 
+# SimpleJWT
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
     "ROTATE_REFRESH_TOKENS": True,
     "AUTH_HEADER_TYPES": ("Bearer",),
-    "BLACKLIST_AFTER_ROTATION": True,
 }
+
+# Djoser
+DJOSER = {
+    "USER_CREATE_PASSWORD_RETYPE": True,
+    "SEND_ACTIVATION_EMAIL": True,  # Bật gửi email kích hoạt
+    "ACTIVATION_URL": "activate/{uid}/{token}",  # URL để kích hoạt (không cần #/)
+    "PASSWORD_RESET_CONFIRM_URL": "password/reset/confirm/{uid}/{token}",  # URL reset password
+    "PASSWORD_RESET_CONFIRM_RETYPE": True,  # Yêu cầu nhập lại password khi reset
+    "SOCIAL_AUTH_TOKEN_STRATEGY": "djoser.social.token.jwt.TokenStrategy",
+    "SOCIAL_AUTH_ALLOWED_REDIRECT_URIS": ["http://localhost:8000/auth/google/callback/"],
+    "SERIALIZERS": {
+        "activation": "djoser.serializers.ActivationSerializer",
+        "user_create": "core.serializers.UserCreateSerializer",
+        "current_user": "core.serializers.UserSerializer",
+    },
+    "DOMAIN": "localhost:8000",
+    "SITE_NAME": "Your Site",
+}
+
+AUTH_USER_MODEL = "core.User"
+
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+
+# Cấu hình Google OAuth
+AUTHENTICATION_BACKENDS = (
+    "social_core.backends.google.GoogleOAuth2",  # Backend cho Google
+    "django.contrib.auth.backends.ModelBackend",  # Backend mặc định của Django
+)
+
+SOCIAL_AUTH_PIPELINE = (
+    "social_core.pipeline.social_auth.social_details",
+    "social_core.pipeline.social_auth.social_uid",
+    "social_core.pipeline.social_auth.social_user",
+    "social_core.pipeline.user.get_username",
+    "social_core.pipeline.social_auth.associate_by_email",
+    "social_core.pipeline.user.create_user",
+    "social_core.pipeline.social_auth.associate_user",
+    "social_core.pipeline.social_auth.load_extra_data",
+    "social_core.pipeline.user.user_details",
+)
+
+SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = (
+    ""  # Lấy từ Google Cloud Console
+)
+SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = ""  # Lấy từ Google Cloud Console
+SOCIAL_AUTH_GOOGLE_OAUTH2_SCOPE = ["email", "profile"]
+
+SOCIAL_AUTH_JSONFIELD_ENABLED = True
+SOCIAL_AUTH_GOOGLE_OAUTH2_REDIRECT_URI = "http://localhost:8000/auth/google/callback/"
+SOCIAL_AUTH_ALLOWED_REDIRECT_URIS = ["http://localhost:8000/auth/google/callback/"]
+
+
+CORS_ALLOWED_ORIGINS = []
+CORS_ALLOW_CREDENTIALS = True
